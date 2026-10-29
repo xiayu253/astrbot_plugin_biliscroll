@@ -43,7 +43,7 @@ class BiliScrollPlugin(Star):
             logger.error(f"[BiliScroll] 依赖缺失: {msg}")
             return
 
-        logged_in, uname = self.api.check_login()
+        logged_in, uname = await self.api.check_login()
         if logged_in:
             logger.info(f"[BiliScroll] B站登录正常: {uname}")
         else:
@@ -149,7 +149,7 @@ class BiliScrollPlugin(Star):
         max_seconds = int(self.cfg.get("max_duration_minutes", 10)) * 60
         n_frames = max(int(self.cfg.get("frames_per_video", 6)), 1)
 
-        videos = self.api.recommend(30)
+        videos = await self.api.recommend(30)
         if not videos:
             logger.warning("[BiliScroll] 没拿到推荐，跳过")
             return
@@ -173,18 +173,20 @@ class BiliScrollPlugin(Star):
             for i, c in enumerate(candidates, start=1):
                 # 先抓评论（快，不需要下载）
                 try:
-                    comments_by_index[i] = self.comments.top_comments(c["bvid"], limit=8)
+                    comments_by_index[i] = await self.comments.top_comments(
+                        c["bvid"], limit=8
+                    )
                 except Exception as e:
                     logger.debug(f"[BiliScroll] 评论抓取失败 {c['bvid']}: {e}")
                     comments_by_index[i] = []
 
                 sub = os.path.join(workdir, str(i))
                 os.makedirs(sub, exist_ok=True)
-                path = vid.download(c["bvid"], sub)
+                path = await vid.download(c["bvid"], sub)
                 if not path:
                     continue
                 paths[i] = path
-                frames_by_index[i] = vid.extract_frames(path, n_frames, sub)
+                frames_by_index[i] = await vid.extract_frames(path, n_frames, sub)
 
             if not paths:
                 logger.warning("[BiliScroll] 所有候选都下载失败")
@@ -293,7 +295,7 @@ class BiliScrollPlugin(Star):
     async def status(self, event):
         """查看刷B站状态"""
         ok, msg = vid.available()
-        logged, uname = self.api.check_login()
+        logged, uname = await self.api.check_login()
         lines = [
             f"依赖: {'正常' if ok else msg}",
             f"B站登录: {uname if logged else '未登录'}",

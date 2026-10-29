@@ -2,7 +2,7 @@ name: astrbot_plugin_biliscroll
 display_name: 刷B站
 desc: 让 Bot 真的去刷 B 站，看画面、读评论区，看到有意思的主动分享给你
 help: 自动从首页推荐挑视频，看画面和评论区后挑最有话说的一条，先说感想再发视频。命令 /刷b站 立即刷一次，/刷b站状态 查看状态
-version: v0.1.0
+version: v0.1.1
 author: xiayu253
 repo: https://github.com/xiayu253/astrbot_plugin_biliscroll
 astrbot_version: ">=4.24.0"
