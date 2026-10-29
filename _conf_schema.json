@@ -1,0 +1,68 @@
+{
+    "bilibili_cookie": {
+        "description": "B站 Cookie",
+        "type": "string",
+        "hint": "用于获取首页个性化推荐。需要 SESSDATA 等完整 Cookie",
+        "default": ""
+    },
+    "target_umo": {
+        "description": "分享给谁",
+        "type": "string",
+        "hint": "例如 机器人名:FriendMessage:123456789",
+        "default": ""
+    },
+    "enable": {
+        "description": "启用自动刷B站",
+        "type": "bool",
+        "hint": "关闭后不再自动分享",
+        "default": false
+    },
+    "daily_min": {
+        "description": "每天最少分享几个",
+        "type": "int",
+        "hint": "设为 0 表示可能某天不分享",
+        "default": 2
+    },
+    "daily_max": {
+        "description": "每天最多分享几个",
+        "type": "int",
+        "hint": "设为 0 表示关闭",
+        "default": 3
+    },
+    "max_duration_minutes": {
+        "description": "只挑多长的视频（分钟）",
+        "type": "int",
+        "hint": "超过这个时长的跳过，太长没法好好看",
+        "default": 10
+    },
+    "candidates": {
+        "description": "每次挑几个候选让她选",
+        "type": "int",
+        "hint": "候选越多她挑得越准，但下载越慢。建议 3",
+        "default": 3
+    },
+    "frames_per_video": {
+        "description": "每个视频抽几帧给她看",
+        "type": "int",
+        "hint": "帧越多她理解越准，建议 6-8",
+        "default": 6
+    },
+    "quiet_hours_start": {
+        "description": "免打扰开始时间（小时）",
+        "type": "int",
+        "hint": "比如 1 表示凌晨 1 点到 8 点不分享",
+        "default": 1
+    },
+    "quiet_hours_end": {
+        "description": "免打扰结束时间（小时）",
+        "type": "int",
+        "hint": "",
+        "default": 8
+    },
+    "llm_provider_id": {
+        "description": "用什么模型判断和生成感想",
+        "type": "string",
+        "hint": "留空使用当前默认 provider",
+        "default": ""
+    }
+}
