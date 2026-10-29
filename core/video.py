@@ -1,7 +1,13 @@
-"""视频下载与抽帧。"""
+"""视频下载与抽帧。
+
+download / extract_frames 内部是阻塞操作（yt-dlp 下载、ffmpeg 抽帧），
+对外提供 async 版本，通过 asyncio.to_thread 放到线程池执行，
+避免阻塞 AstrBot 主事件循环。
+"""
 
 from __future__ import annotations
 
+import asyncio
 import os
 import shutil
 import subprocess
@@ -38,8 +44,8 @@ def available() -> tuple[bool, str]:
     return True, "ok"
 
 
-def download(bvid: str, dest_dir: str) -> str | None:
-    """下载视频（带音频，720p 以内），返回文件路径"""
+def _download_sync(bvid: str, dest_dir: str) -> str | None:
+    """下载视频（带音频，720p 以内），返回文件路径。阻塞，需在工作线程调用"""
     yt_dlp = _yt_dlp()
     ffmpeg = _ffmpeg_exe()
     if not yt_dlp or not ffmpeg:
@@ -74,8 +80,13 @@ def download(bvid: str, dest_dir: str) -> str | None:
     return path
 
 
-def extract_frames(video: str, n: int, out_dir: str) -> list[str]:
-    """平均抽 n 帧，返回图片路径列表"""
+async def download(bvid: str, dest_dir: str) -> str | None:
+    """异步下载：阻塞操作放到线程池，不卡事件循环"""
+    return await asyncio.to_thread(_download_sync, bvid, dest_dir)
+
+
+def _extract_frames_sync(video: str, n: int, out_dir: str) -> list[str]:
+    """平均抽 n 帧，返回图片路径列表。阻塞，需在工作线程调用"""
     ffmpeg = _ffmpeg_exe()
     if not ffmpeg:
         return []
@@ -118,6 +129,11 @@ def extract_frames(video: str, n: int, out_dir: str) -> list[str]:
 
     logger.info(f"[BiliScroll] 抽到 {len(frames)}/{n} 帧")
     return frames
+
+
+async def extract_frames(video: str, n: int, out_dir: str) -> list[str]:
+    """异步抽帧：阻塞操作放到线程池"""
+    return await asyncio.to_thread(_extract_frames_sync, video, n, out_dir)
 
 
 def make_workdir() -> str:

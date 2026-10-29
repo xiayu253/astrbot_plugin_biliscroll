@@ -1,7 +1,11 @@
-"""抓评论区高赞评论，作为"大家在关注什么"的参考。"""
+"""抓评论区高赞评论，作为"大家在关注什么"的参考。
+
+网络请求通过 asyncio.to_thread 放到线程池，避免阻塞主事件循环。
+"""
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import urllib.request
@@ -29,7 +33,8 @@ class CommentFetcher:
     def __init__(self, cookie: str = ""):
         self.cookie = cookie.strip()
 
-    def _get(self, url: str, referer: str = "https://www.bilibili.com/") -> dict:
+    def _get_sync(self, url: str, referer: str = "https://www.bilibili.com/") -> dict:
+        """同步请求，只能在非事件循环线程中调用"""
         headers = {
             "User-Agent": UA,
             "Referer": referer,
@@ -41,9 +46,13 @@ class CommentFetcher:
         with urllib.request.urlopen(req, timeout=20) as r:
             return json.loads(r.read().decode("utf-8", errors="replace"))
 
-    def get_aid(self, bvid: str) -> int | None:
+    async def _get(self, url: str, referer: str = "https://www.bilibili.com/") -> dict:
+        """异步请求：阻塞 IO 放到线程池"""
+        return await asyncio.to_thread(self._get_sync, url, referer)
+
+    async def get_aid(self, bvid: str) -> int | None:
         try:
-            d = self._get(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}")
+            d = await self._get(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}")
             return (d.get("data") or {}).get("aid")
         except Exception as e:
             logger.debug(f"[BiliScroll] 取 aid 失败 {bvid}: {e}")
@@ -76,15 +85,15 @@ class CommentFetcher:
             return False
         return True
 
-    def top_comments(self, bvid: str, limit: int = 8) -> list[dict]:
+    async def top_comments(self, bvid: str, limit: int = 8) -> list[dict]:
         """返回高赞评论 [{'text':..., 'like':...}]"""
-        aid = self.get_aid(bvid)
+        aid = await self.get_aid(bvid)
         if not aid:
             return []
         # 注意：Referer 必须是视频页，用首页会被 -400 拒绝
         referer = f"https://www.bilibili.com/video/{bvid}/"
         try:
-            d = self._get(
+            d = await self._get(
                 f"https://api.bilibili.com/x/v2/reply?type=1&oid={aid}&sort=2&ps=20&pn=1",
                 referer=referer,
             )
